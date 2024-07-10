@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35013.160
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheFloor", "TheFloor\TheFloor\TheFloor.csproj", "{0B0C95DA-E93A-4220-AB7F-B19723BE21D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheFloor", "TheFloor\TheFloor\TheFloor.csproj", "{0B0C95DA-E93A-4220-AB7F-B19723BE21D5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheFloor.Client", "TheFloor\TheFloor.Client\TheFloor.Client.csproj", "{4202BBF6-F00E-4FF9-8322-871E3D6658A3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheFloor.Client", "TheFloor\TheFloor.Client\TheFloor.Client.csproj", "{4202BBF6-F00E-4FF9-8322-871E3D6658A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
