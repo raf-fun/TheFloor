@@ -49,3 +49,31 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+.card {
+    perspective: 1000px;
+    cursor: pointer;
+}
+
+.card-body {
+    transition: transform 1.0s ease;
+    transform-style: preserve-3d;
+}
+
+    .card-body.flipped {
+        transform: rotateY(180deg);
+    }
+
+.fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    background-color: white;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

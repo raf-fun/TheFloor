@@ -1,16 +1,51 @@
-﻿window.toggleAnimation = (elementId) => {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.classList.toggle('animate');
-    }
-};
-function toggleFullScreenAnimation(elementId, isActive) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        if (isActive) {
-            element.classList.add('fullscreen');
-        } else {
-            element.classList.remove('fullscreen');
-        }
-    }
+﻿function GetFolderFiles() {
+    return new Promise((resolve, reject) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.webkitdirectory = true;
+        input.multiple = true;
+
+        input.onchange = () => {
+            const files = Array.from(input.files);
+            const folderMap = {};
+
+            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+
+            files.forEach(file => {
+                const pathParts = file.webkitRelativePath.split('/');
+                const fileName = pathParts.pop();
+                const folderPath = pathParts.join('/');
+
+                const fileExtension = fileName.slice(fileName.lastIndexOf('.')).toLowerCase();
+                if (!imageExtensions.includes(fileExtension)) {
+                    return;
+                }
+
+                if (!folderMap[folderPath]) {
+                    folderMap[folderPath] = [];
+                }
+
+                folderMap[folderPath].push({
+                    name: fileName,
+                    path: file.webkitRelativePath,
+                    size: file.size,
+                    type: file.type,
+                    url: URL.createObjectURL(file) // Create a URL for the image
+                });
+            });
+
+            const folders = Object.keys(folderMap).map(folderPath => ({
+                path: folderPath,
+                files: folderMap[folderPath]
+            }));
+
+            resolve(folders);
+        };
+
+        input.onerror = (err) => {
+            reject(err);
+        };
+
+        input.click();
+    });
 }

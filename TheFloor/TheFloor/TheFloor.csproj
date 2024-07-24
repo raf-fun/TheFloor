@@ -23,4 +23,9 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ExampleImages\Fruit\" />
+    <Folder Include="ExampleImages\Veggies\" />
+  </ItemGroup>
+
 </Project>

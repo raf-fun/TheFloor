@@ -1,0 +1,16 @@
+﻿@using TheFloor.Model
+
+<h3>Back</h3>
+
+<div>
+    @foreach (var image in pictures)
+    {
+        <img src="@image.Url" alt="@image.Name" style="max-width: 200px; max-height: 200px;" />
+        <br />
+    }
+</div>
+
+@code {
+    [Parameter]
+    public required List<FileData> pictures { get; set; } = new();
+}

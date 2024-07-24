@@ -1,0 +1,189 @@
+﻿@page "/mainClient"
+@rendermode InteractiveAuto
+
+@inject IJSRuntime JS
+
+<PageTitle>Counter</PageTitle>
+
+@* <div>
+    <label for="numItems">Number of Items:</label>
+    <input type="number" id="numItems" @bind="NumberOfItems" min="1" />
+</div>
+<div>
+    <label for="itemsPerRow">Items Per Row:</label>
+    <input type="number" id="itemsPerRow" @bind="ItemsPerRow" min="1" />
+</div> *@
+<div>
+    <button class="btn btn-primary" @onclick="LoadImages">Load Images</button>
+</div>
+@if (selectedFolders != null)
+{
+    <h4>Selected Folders and Images</h4>
+    <ul>
+        @foreach (var folder in selectedFolders)
+        {
+            <li>
+                <strong>@folder.Path</strong>
+                <ul>
+                    @foreach (var file in folder.Files)
+                    {
+                        <li>
+                            @file.Name (@file.Size bytes)
+                            <br />
+                            <img src="@file.Url" alt="@file.Name" style="max-width: 200px; max-height: 200px;" />
+                        </li>
+                    }
+                </ul>
+            </li>
+        }
+    </ul>
+}
+@* <div class="card-container">
+    @foreach (var card in Cards)
+    {
+        <div class="card @GetCardClasses(card)" @onclick="() => ToggleCard(card)">
+            <div class="card-inner">
+                <div class="card-front bg-secondary">
+                    <!-- Front content here -->
+                    @card.FrontContent
+                </div>
+                <div class="card-back bg-primary">
+                    <!-- Back content here -->
+                    @card.BackContent
+                </div>
+            </div>
+        </div>
+    }
+</div> *@
+
+<style>
+    .card-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px;
+    }
+
+    .card {
+        perspective: 1000px;
+        position: relative;
+        width: 100%;
+        height: 300px; /* Adjust height as needed */
+        transition: width 1.0s ease, height 1.0s ease, transform 1.0s ease;
+    }
+
+    .card-inner {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        transition: transform 1.0s ease;
+        transform-style: preserve-3d;
+        transform: rotateY(0deg);
+    }
+
+    .card.flipped .card-inner {
+        transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+    }
+
+    .card-back {
+        transform: rotateY(180deg);
+    }
+
+    .fullscreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        background-color: white; /* Optional: to make the back side visible */
+        transition: width 1.0s ease, height 1.0s ease, transform 1.0s ease;
+    }
+
+</style>
+
+
+@code {
+    private List<FolderData> selectedFolders = new();
+
+    public async Task LoadImages()
+    {
+        try
+        {
+            Console.WriteLine("Picker called.");
+
+            var folders = await JS.InvokeAsync<FolderData[]>("GetFolderFiles");
+            if (folders != null)
+            {
+                Console.WriteLine($"Received {folders.Length} folders");
+                selectedFolders = folders.ToList();
+            }
+            else
+            {
+                Console.WriteLine("No folders received");
+            }
+            var sme = 0;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error picking folder: {ex.Message}");
+        }
+    }
+
+    private List<CardModel> Cards = new List<CardModel>
+    {
+        new CardModel { Id = 1, FrontContent = "Front 1", BackContent = "Back 1" },
+        new CardModel { Id = 2, FrontContent = "Front 2", BackContent = "Back 2" },
+        // Add more cards as needed
+    };
+
+    private void ToggleCard(CardModel card)
+    {
+        card.IsFlipped = !card.IsFlipped;
+        card.IsFullscreen = card.IsFlipped;
+    }
+
+    private string GetCardClasses(CardModel card)
+    {
+        var classes = "card";
+        if (card.IsFlipped) classes += " flipped";
+        if (card.IsFullscreen) classes += " fullscreen";
+        return classes;
+    }
+
+    public class CardModel
+    {
+        public int Id { get; set; }
+        public string FrontContent { get; set; }
+        public string BackContent { get; set; }
+        public bool IsFlipped { get; set; }
+        public bool IsFullscreen { get; set; }
+    }
+
+    public class ImagesModel
+    {
+        public string? Name { get; set; }
+        public List<byte> Images { get; set; }
+    }
+
+    public class FileData
+    {
+        public string Name { get; set; }
+        public string Path { get; set; }
+        public long Size { get; set; }
+        public string Type { get; set; }
+        public string Url { get; set; }
+    }
+
+    public class FolderData
+    {
+        public string Path { get; set; }
+        public List<FileData> Files { get; set; }
+    }
+}

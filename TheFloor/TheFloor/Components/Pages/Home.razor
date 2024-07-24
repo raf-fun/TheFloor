@@ -1,7 +1,79 @@
 ﻿@page "/"
+@using TheFloor.Model
+@rendermode InteractiveServer
+
+@inject IJSRuntime JS
+
 
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<div>
+    <button class="btn btn-primary" @onclick="LoadImages">Load Images</button>
+</div>
+@if (selectedFolders == null || !selectedFolders.Any())
+{
+    <p>No folders selected.</p>
+}
+else
+{
+    <h4>Selected Folders</h4>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+        @foreach (var folder in selectedFolders)
+        {
+            <div class="col">
+                <div class="card h-100" @onclick="() => ShowBack(folder)">
+                    <div class="card-body">
+                        <h5 class="card-title">@folder.Path</h5>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
 
-Welcome to your new app.
+@if (selectedFolder != null)
+{
+    <div class="fullscreen" @onclick="HideBack">
+        <Back pictures="selectedFolder.Files" />
+    </div>
+}
+
+
+@code {
+    private List<FolderData> selectedFolders = new();
+    private FolderData selectedFolder;
+
+    public async Task LoadImages()
+    {
+        try
+        {
+            Console.WriteLine("Picker called.");
+
+            var folders = await JS.InvokeAsync<FolderData[]>("GetFolderFiles");
+            if (folders != null)
+            {
+                Console.WriteLine($"Received {folders.Length} folders");
+                selectedFolders = folders.ToList();
+            }
+            else
+            {
+                Console.WriteLine("No folders received");
+            }
+            var sme = 0;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error picking folder: {ex.Message}");
+        }
+    }
+
+    private void ShowBack(FolderData folder)
+    {
+        selectedFolder = folder;
+    }
+
+    private void HideBack()
+    {
+        selectedFolder = null;
+    }
+}
