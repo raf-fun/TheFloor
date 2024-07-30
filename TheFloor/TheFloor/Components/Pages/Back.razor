@@ -1,16 +1,173 @@
 ﻿@using TheFloor.Model
 
-<h3>Back</h3>
+@if (!IsStarted)
+{
+    <button class="btn btn-primary mb-3" @onclick="StartTimer">Start</button>
+}
 
-<div>
-    @foreach (var image in pictures)
-    {
-        <img src="@image.Url" alt="@image.Name" style="max-width: 200px; max-height: 200px;" />
-        <br />
-    }
-</div>
+@if (IsStarted)
+{
+    <div class="d-flex flex-column align-items-center justify-content-center vh-100 text-center">
+        <h4>@currentPicture.Name</h4>
+        <div class="d-flex align-items-center justify-content-center" style="width: 60%; height: 60vh;">
+            <div class="d-flex flex-column align-items-center me-5">
+                <h5>@category.Name</h5>
+                <span class="fs-3">@ChallengerScore</span>
+                <span class="fs-3">Timer: @ChallengerTimerValue seconds</span>
+            </div>
+            <div class="image-wrapper d-flex align-items-center justify-content-center" style="width: 80%; height: 60vh;">
+                <img src="@currentPicture.Url" alt="@currentPicture.Name" class="img-fluid" style="max-width: 100%; max-height: 100%; object-fit: cover;" />
+            </div>
+            <div class="d-flex flex-column align-items-center ms-5">
+                <h5>@Challenger.Name</h5>
+                <span class="fs-3">@ChallengeeScore</span>
+                <span class="fs-3">Timer: @ChallengeeTimerValue seconds</span>
+            </div>
+        </div>
+        <div class="d-flex justify-content-around w-100 mt-3">
+            <button class="btn btn-success w-50 me-2" @onclick="CheckClicked" disabled="@TimerZero">
+                <i class="fa-solid fa-check fa-xl"></i>
+            </button>
+            <button class="btn btn-danger w-50 ms-2" @onclick="XClicked" disabled="@TimerZero">
+                <i class="fa-solid fa-x fa-xl"></i>
+            </button>
+        </div>
+        <button class="btn btn-primary mt-3" @onclick="Close">Close</button>
+    </div>
+}
 
 @code {
     [Parameter]
-    public required List<FileData> pictures { get; set; } = new();
+    public required Category category { get; set; }
+
+    [Parameter]
+    public EventCallback Close { get; set; }
+
+    [Parameter]
+    public required Category Challenger { get; set; }
+
+    public bool IsStarted { get; set; } = false;
+
+    public int ChallengerTimerValue { get; set; }
+    public int ChallengeeTimerValue { get; set; }
+    public bool TimerZero { get; set; }
+
+    public System.Timers.Timer ChallengerTimer { get; set; }
+    public System.Timers.Timer ChallengeeTimer { get; set; }
+
+    public int ChallengerScore { get; set; }
+    public int ChallengeeScore { get; set; }
+
+    public bool ChallengerLastWhent { get; set; } = false;
+
+    private FileData currentPicture;
+    private const int countdown = 20;
+
+
+    protected override void OnParametersSet()
+    {
+        if (category?.Images != null && category.Images.Any())
+        {
+            ShowRandomPicture();
+        }
+    }
+
+    private void CheckClicked()
+    {
+        SwitchTimerAndScore(true);
+    }
+
+    private void XClicked()
+    {
+        SwitchTimerAndScore();
+    }
+
+    private void SwitchTimerAndScore(bool check = false)
+    {
+        if (ChallengerLastWhent)
+        {
+            if (check)
+            {
+                ChallengeeScore++;
+            }
+
+            StartChallengeeTimer();
+        }
+        else
+        {
+            if (check)
+            {
+                ChallengerScore++;
+            }
+            StartChallengerTimer();
+        }
+        ShowRandomPicture();
+    }
+
+    private void ShowRandomPicture()
+    {
+
+        ChallengerLastWhent = !ChallengerLastWhent;
+        var random = new Random();
+        currentPicture = category.Images[random.Next(category.Images.Count)];
+        StateHasChanged();
+    }
+
+    private void StartChallengerTimer()
+    {
+        ChallengeeTimer?.Stop();
+        ChallengerTimer = new System.Timers.Timer(1000); // 1 second interval
+        ChallengerTimer.Elapsed += OnChallengerTimerElapsed;
+        ChallengerTimer.Start();
+    }
+
+    private void StartChallengeeTimer()
+    {
+        ChallengerTimer?.Stop();
+        ChallengeeTimer = new System.Timers.Timer(1000); // 1 second interval
+        ChallengeeTimer.Elapsed += OnChallengeeTimerElapsed;
+        ChallengeeTimer.Start();
+    }
+
+    private void OnChallengerTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        InvokeAsync(() =>
+        {
+            ChallengerTimerValue--;
+            if (ChallengerTimerValue <= 0)
+            {
+                TimerZero = true;
+                ChallengerTimer.Stop();
+            }
+            StateHasChanged();
+        });
+    }
+
+    private void OnChallengeeTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        InvokeAsync(() =>
+        {
+            ChallengeeTimerValue--;
+            if (ChallengeeTimerValue <= 0)
+            {
+                TimerZero = true;
+                ChallengeeTimer.Stop();
+            }
+            StateHasChanged();
+        });
+    }
+
+    private void StartTimer()
+    {
+        IsStarted = true;
+        ChallengerTimerValue = countdown;
+        ChallengeeTimerValue = countdown;
+        StartChallengerTimer();
+    }
+
+    public void Dispose()
+    {
+        ChallengeeTimer?.Dispose();
+        ChallengerTimer?.Dispose();
+    }
 }

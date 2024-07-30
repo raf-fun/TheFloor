@@ -10,7 +10,7 @@
 <div>
     <button class="btn btn-primary" @onclick="LoadImages">Load Images</button>
 </div>
-@if (selectedFolders == null || !selectedFolders.Any())
+@if (categories == null || !categories.Any())
 {
     <p>No folders selected.</p>
 }
@@ -18,12 +18,12 @@ else
 {
     <h4>Selected Folders</h4>
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
-        @foreach (var folder in selectedFolders)
+        @foreach (var category in categories)
         {
             <div class="col">
-                <div class="card h-100" @onclick="() => ShowBack(folder)">
+                <div class="card h-100" style="background-color: @category.BgColor;" @onclick="() => ShowBack(category)">
                     <div class="card-body">
-                        <h5 class="card-title">@folder.Path</h5>
+                        <h5 class="card-title">@category.Name</h5>
                     </div>
                 </div>
             </div>
@@ -31,10 +31,10 @@ else
     </div>
 }
 
-@if (selectedFolder != null)
+@if (selectedCategory != null)
 {
-    <div class="fullscreen" @onclick="HideBack">
-        <Back pictures="selectedFolder.Files" />
+    <div class="fullscreen">
+        <Back category="selectedCategory" Close="HideBack" Challenger="ChallengerCategory"/>
     </div>
 }
 
@@ -42,6 +42,11 @@ else
 @code {
     private List<FolderData> selectedFolders = new();
     private FolderData selectedFolder;
+
+    private List<Category> categories = new();
+    private Category selectedCategory;
+
+    public Category ChallengerCategory {get; set;}
 
     public async Task LoadImages()
     {
@@ -54,12 +59,20 @@ else
             {
                 Console.WriteLine($"Received {folders.Length} folders");
                 selectedFolders = folders.ToList();
+
+                var colors = new List<string> { "#FF5733", "#33FF57", "#3357FF", "#F033FF", "#FF33A1", "#33FFA1", "#FFA133", "#A1FF33" };
+                //var random = new Random();
+                categories = selectedFolders.Select((folder, index) => new Category
+                    {
+                        Name = System.IO.Path.GetFileName(folder.Path),
+                        Images = folder.Files,
+                        BgColor = colors[index % colors.Count]
+                    }).ToList();
             }
             else
             {
                 Console.WriteLine("No folders received");
             }
-            var sme = 0;
         }
         catch (Exception ex)
         {
@@ -67,13 +80,14 @@ else
         }
     }
 
-    private void ShowBack(FolderData folder)
+    private void ShowBack(Category category)
     {
-        selectedFolder = folder;
+        selectedCategory = category;
+        ChallengerCategory = category;
     }
 
     private void HideBack()
     {
-        selectedFolder = null;
+        selectedCategory = null;
     }
 }
