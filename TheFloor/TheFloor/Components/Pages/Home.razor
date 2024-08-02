@@ -27,7 +27,7 @@ else
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
         @foreach (var category in categories)
         {
-            var isDisabled = isPickingRandom || !enabledCategories.Contains(category);
+            var isDisabled = isPickingRandom || !(enabledCategories.Contains(category) && category != ChallengerCategory);
             <div class="col">
                 <div class="card h-100 @(category == ChallengerCategory ? "highlight" : "") @(isDisabled ? "disabled-card" : "")"
                      style="background-color: @category.BgColor;" @onclick="@(isDisabled ? null : () => ShowBack(category))">
@@ -113,17 +113,14 @@ else
     {
         if (selectedCategory != null)
         {
-            var index = categories.IndexOf(selectedCategory);
-            if (index >= 0)
-            {
-                categories[index] = ChallengerCategory;
-            }
+            ReplaceCategory(selectedCategory, ChallengerCategory);
             selectedCategory = null;
         }
 
         if (ChallengerCategory != null)
         {
             enabledCategories = GetAdjacentCategories(ChallengerCategory);
+            StateHasChanged();
         }
         else
         {
@@ -140,7 +137,7 @@ else
             return;
         }
 
-        if (pickedCategories.Count == categories.Count)
+        if (pickedCategories.Count == categories.Distinct().ToList().Count)
         {
             pickedCategories.Clear();
         }
@@ -174,33 +171,49 @@ else
         }
     }
 
+    private void ReplaceCategory(Category oldCategory, Category newCategory)
+    {
+        for (int i = 0; i < categories.Count; i++)
+        {
+            if (categories[i].Name == oldCategory.Name)
+            {
+                categories[i] = newCategory;
+            }
+        }
+    }
+
     private List<Category> GetAdjacentCategories(Category category)
     {
-        var index = categories.IndexOf(category);
         var adjacentCategories = new List<Category>();
-
-        if (index < 0)
-            return adjacentCategories;
-
         int rowCount = 4; // Columns per row
 
-        // Above
-        if (index - rowCount >= 0)
-            adjacentCategories.Add(categories[index - rowCount]);
+        // Find all indices of the challenger category
+        var indices = categories.Select((cate, index) => new { cate, index })
+                                .Where(pair => pair.cate.Name == category.Name)
+                                .Select(pair => pair.index)
+                                .ToList();
 
-        // Below
-        if (index + rowCount < categories.Count)
-            adjacentCategories.Add(categories[index + rowCount]);
+        foreach (var index in indices)
+        {
+            // Above
+            if (index - rowCount >= 0)
+                adjacentCategories.Add(categories[index - rowCount]);
 
-        // Left
-        if (index % rowCount != 0)
-            adjacentCategories.Add(categories[index - 1]);
+            // Below
+            if (index + rowCount < categories.Count)
+                adjacentCategories.Add(categories[index + rowCount]);
 
-        // Right
-        if (index % rowCount != rowCount - 1 && index + 1 < categories.Count)
-            adjacentCategories.Add(categories[index + 1]);
+            // Left
+            if (index % rowCount != 0)
+                adjacentCategories.Add(categories[index - 1]);
 
-        return adjacentCategories;
+            // Right
+            if (index % rowCount != rowCount - 1 && index + 1 < categories.Count)
+                adjacentCategories.Add(categories[index + 1]);
+        }
+
+        // Remove duplicates and return
+        return adjacentCategories.Distinct().ToList();
     }
 
     private void Shuffle<T>(IList<T> list)
