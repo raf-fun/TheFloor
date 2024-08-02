@@ -7,21 +7,30 @@
 
 <PageTitle>Home</PageTitle>
 
-<div>
-    <button class="btn btn-primary" @onclick="LoadImages">Load Images</button>
-</div>
+@if (showLoadImages)
+{
+    <div>
+        <button class="btn btn-primary" @onclick="LoadImages">Load Images</button>
+    </div>
+}
+
 @if (categories == null || !categories.Any())
 {
     <p>No folders selected.</p>
 }
 else
 {
+    <div>
+        <button class="btn btn-secondary mb-3" @onclick="PickRandomCategory">Pick Random Challenger</button>
+    </div>
     <h4>Selected Folders</h4>
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
         @foreach (var category in categories)
         {
+            var isDisabled = isPickingRandom || !enabledCategories.Contains(category);
             <div class="col">
-                <div class="card h-100" style="background-color: @category.BgColor;" @onclick="() => ShowBack(category)">
+                <div class="card h-100 @(category == ChallengerCategory ? "highlight" : "") @(isDisabled ? "disabled-card" : "")"
+                     style="background-color: @category.BgColor;" @onclick="@(isDisabled ? null : () => ShowBack(category))">
                     <div class="card-body">
                         <h5 class="card-title">@category.Name</h5>
                     </div>
@@ -40,13 +49,23 @@ else
 
 
 @code {
+    private bool showLoadImages = true;
+
     private List<FolderData> selectedFolders = new();
     private FolderData selectedFolder;
 
     private List<Category> categories = new();
-    private Category selectedCategory;
+    private List<Category> enabledCategories = new();
+    private List<Category> pickedCategories = new();
 
+    private Category? selectedCategory;
     public Category ChallengerCategory {get; set;}
+
+    private int highlightIndex = 0;
+    private bool isPickingRandom = false;
+    private const int selectionDuration = 1000;
+
+    private Random random = new();
 
     public async Task LoadImages()
     {
@@ -61,13 +80,18 @@ else
                 selectedFolders = folders.ToList();
 
                 var colors = new List<string> { "#FF5733", "#33FF57", "#3357FF", "#F033FF", "#FF33A1", "#33FFA1", "#FFA133", "#A1FF33" };
-                //var random = new Random();
+
                 categories = selectedFolders.Select((folder, index) => new Category
                     {
                         Name = System.IO.Path.GetFileName(folder.Path),
                         Images = folder.Files,
                         BgColor = colors[index % colors.Count]
                     }).ToList();
+
+                Shuffle(categories);
+
+                showLoadImages = false;
+                enabledCategories = new List<Category>();
             }
             else
             {
@@ -83,11 +107,123 @@ else
     private void ShowBack(Category category)
     {
         selectedCategory = category;
-        ChallengerCategory = category;
     }
 
     private void HideBack()
     {
-        selectedCategory = null;
+        if (selectedCategory != null)
+        {
+            var index = categories.IndexOf(selectedCategory);
+            if (index >= 0)
+            {
+                categories[index] = ChallengerCategory;
+            }
+            selectedCategory = null;
+        }
+
+        if (ChallengerCategory != null)
+        {
+            enabledCategories = GetAdjacentCategories(ChallengerCategory);
+        }
+        else
+        {
+            enabledCategories.Clear();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task PickRandomCategory()
+    {
+        if (isPickingRandom)
+        {
+            return;
+        }
+
+        if (pickedCategories.Count == categories.Count)
+        {
+            pickedCategories.Clear();
+        }
+
+        var availableCategories = categories.Except(pickedCategories).ToList();
+
+        isPickingRandom = true;
+
+        try
+        {
+            int totalSteps = selectionDuration / 100;
+            for (int i = 0; i < totalSteps; i++)
+            {
+                highlightIndex = random.Next(availableCategories.Count); //i % availableCategories.Count;
+                ChallengerCategory = availableCategories[highlightIndex];
+                StateHasChanged();
+                await Task.Delay(100);
+            }
+            pickedCategories.Add(ChallengerCategory);
+
+        }
+        catch (TaskCanceledException)
+        {
+            // Handle task cancellation
+        }
+        finally
+        {
+            isPickingRandom = false;
+            enabledCategories = GetAdjacentCategories(ChallengerCategory);
+            StateHasChanged();
+        }
+    }
+
+    private List<Category> GetAdjacentCategories(Category category)
+    {
+        var index = categories.IndexOf(category);
+        var adjacentCategories = new List<Category>();
+
+        if (index < 0)
+            return adjacentCategories;
+
+        int rowCount = 4; // Columns per row
+
+        // Above
+        if (index - rowCount >= 0)
+            adjacentCategories.Add(categories[index - rowCount]);
+
+        // Below
+        if (index + rowCount < categories.Count)
+            adjacentCategories.Add(categories[index + rowCount]);
+
+        // Left
+        if (index % rowCount != 0)
+            adjacentCategories.Add(categories[index - 1]);
+
+        // Right
+        if (index % rowCount != rowCount - 1 && index + 1 < categories.Count)
+            adjacentCategories.Add(categories[index + 1]);
+
+        return adjacentCategories;
+    }
+
+    private void Shuffle<T>(IList<T> list)
+    {
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = random.Next(n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
     }
 }
+
+<style>
+    .highlight {
+        outline: #4CAF50 solid 10px;
+    }
+
+    .disabled-card {
+        pointer-events: none;
+        opacity: 0.5;
+    }
+</style>

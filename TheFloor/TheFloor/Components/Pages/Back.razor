@@ -8,33 +8,58 @@
 @if (IsStarted)
 {
     <div class="d-flex flex-column align-items-center justify-content-center vh-100 text-center">
-        <h4>@currentPicture.Name</h4>
+        @if (showPictureName)
+        {
+            <h4>@currentPicture.Name</h4>
+        }
+
         <div class="d-flex align-items-center justify-content-center" style="width: 60%; height: 60vh;">
-            <div class="d-flex flex-column align-items-center me-5">
-                <h5>@category.Name</h5>
-                <span class="fs-3">@ChallengerScore</span>
-                <span class="fs-3">Timer: @ChallengerTimerValue seconds</span>
-            </div>
+            <TimerScore Name="@Challenger.Name" Score="@ChallengerScore"
+                        TimerValue="@ChallengerTimerValue" TimerValueChanged="@(value => ChallengerTimerValue = value)"
+                        IsActive="!ChallengerLastWhent" Timer="ChallengerTimer" />
             <div class="image-wrapper d-flex align-items-center justify-content-center" style="width: 80%; height: 60vh;">
-                <img src="@currentPicture.Url" alt="@currentPicture.Name" class="img-fluid" style="max-width: 100%; max-height: 100%; object-fit: cover;" />
+                @if (currentPicture != null)
+                {
+                    <img src="@currentPicture.Url" alt="@currentPicture.Name" class="img-fluid" style="max-width: 100%; max-height: 100%; object-fit: cover;" />
+                }
+                else
+                {
+                    <h3 style="color:red">No more Pictures</h3>
+                }
             </div>
-            <div class="d-flex flex-column align-items-center ms-5">
-                <h5>@Challenger.Name</h5>
-                <span class="fs-3">@ChallengeeScore</span>
-                <span class="fs-3">Timer: @ChallengeeTimerValue seconds</span>
-            </div>
+            <TimerScore Name="@category.Name" Score="@ChallengeeScore"
+                        TimerValue="@ChallengeeTimerValue" TimerValueChanged="@(value => ChallengeeTimerValue = value)"
+                        IsActive="ChallengerLastWhent" Timer="ChallengeeTimer" />
         </div>
+
         <div class="d-flex justify-content-around w-100 mt-3">
-            <button class="btn btn-success w-50 me-2" @onclick="CheckClicked" disabled="@TimerZero">
+            <button class="btn btn-success w-50 me-2" @onclick="CheckClicked" disabled="@(TimerZero || disableAnswerButtons)">
                 <i class="fa-solid fa-check fa-xl"></i>
             </button>
-            <button class="btn btn-danger w-50 ms-2" @onclick="XClicked" disabled="@TimerZero">
+            <button class="btn btn-danger w-50 ms-2" @onclick="XClicked" disabled="@(TimerZero || disableAnswerButtons)">
                 <i class="fa-solid fa-x fa-xl"></i>
             </button>
         </div>
-        <button class="btn btn-primary mt-3" @onclick="Close">Close</button>
+
+        <button class="btn btn-primary mt-3 mb-3" @onclick="Close">Close</button>
+
+        @if (TimerZero)
+        {
+            <div class="mt-3">
+                @if (ChallengerTimerValue <= 0)
+                {
+                    <h1>Congrats on defending your category! You will now be @Challenger.Name.</h1>
+                }
+                else if (ChallengeeTimerValue <= 0)
+                {
+                    <h1>The challenger category @category.Name has won this round.</h1>
+                }
+            </div>
+        }
     </div>
 }
+
+
 
 @code {
     [Parameter]
@@ -47,13 +72,15 @@
     public required Category Challenger { get; set; }
 
     public bool IsStarted { get; set; } = false;
+    public bool disableAnswerButtons { get; set; } = false;
+    public bool showPictureName { get; set; } = false;
 
     public int ChallengerTimerValue { get; set; }
     public int ChallengeeTimerValue { get; set; }
     public bool TimerZero { get; set; }
 
-    public System.Timers.Timer ChallengerTimer { get; set; }
-    public System.Timers.Timer ChallengeeTimer { get; set; }
+    public System.Timers.Timer ChallengerTimer { get; set; } = new();
+    public System.Timers.Timer ChallengeeTimer { get; set; } = new();
 
     public int ChallengerScore { get; set; }
     public int ChallengeeScore { get; set; }
@@ -61,6 +88,7 @@
     public bool ChallengerLastWhent { get; set; } = false;
 
     private FileData currentPicture;
+    private HashSet<string> shownPictures = new();
     private const int countdown = 20;
 
 
@@ -77,9 +105,14 @@
         SwitchTimerAndScore(true);
     }
 
-    private void XClicked()
+    private async Task XClicked()
     {
-        SwitchTimerAndScore();
+        showPictureName = true;
+        disableAnswerButtons = true;
+        await Task.Delay(3000);
+        showPictureName = false;
+        SwitchPicture();
+        disableAnswerButtons = false;
     }
 
     private void SwitchTimerAndScore(bool check = false)
@@ -88,7 +121,7 @@
         {
             if (check)
             {
-                ChallengeeScore++;
+                ChallengerScore++;
             }
 
             StartChallengeeTimer();
@@ -97,19 +130,34 @@
         {
             if (check)
             {
-                ChallengerScore++;
+                ChallengeeScore++;
             }
             StartChallengerTimer();
         }
+
         ShowRandomPicture();
     }
 
     private void ShowRandomPicture()
     {
-
         ChallengerLastWhent = !ChallengerLastWhent;
-        var random = new Random();
-        currentPicture = category.Images[random.Next(category.Images.Count)];
+        SwitchPicture();
+    }
+
+    private void SwitchPicture()
+    {
+        var remainingPictures = category.Images.Where(img => !shownPictures.Contains(img.Url)).ToList();
+
+        if (remainingPictures.Any())
+        {
+            var random = new Random();
+            currentPicture = remainingPictures[random.Next(remainingPictures.Count)];
+            shownPictures.Add(currentPicture.Url);
+        }
+        else
+        {
+            currentPicture = null;
+        }
         StateHasChanged();
     }
 

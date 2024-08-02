@@ -1,0 +1,54 @@
+﻿@using System.Timers
+
+<div class="d-flex flex-column align-items-center">
+    <h5>@Name</h5>
+    @* <span class="fs-3">@Score</span> *@
+    <span class="fs-3">Timer: @TimerValue seconds</span>
+</div>
+
+@code {
+    [Parameter]
+    public required string Name { get; set; }
+
+    [Parameter]
+    public required int Score { get; set; }
+
+    [Parameter]
+    public required int TimerValue { get; set; }
+
+    [Parameter]
+    public required EventCallback<int> TimerValueChanged { get; set; }
+
+    [Parameter]
+    public required bool IsActive { get; set; }
+
+    [Parameter]
+    public required Timer Timer { get; set; }
+
+    private void OnTimerElapsed(object sender, ElapsedEventArgs e)
+    {
+        if (IsActive)
+        {
+            InvokeAsync(() =>
+            {
+                TimerValue--;
+                if (TimerValue <= 0)
+                {
+                    Timer.Stop();
+                }
+                TimerValueChanged.InvokeAsync(TimerValue);
+                StateHasChanged();
+            });
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Timer.Elapsed += OnTimerElapsed;
+    }
+
+    public void Dispose()
+    {
+        Timer?.Dispose();
+    }
+}
