@@ -1,7 +1,7 @@
 ﻿@using System.Timers
 
 <div class="d-flex flex-column align-items-center">
-    <h5>@Name</h5>
+    <h5 style="color:@(IsActive ? "" : "red")">@Name</h5>
     @* <span class="fs-3">@Score</span> *@
     <span class="fs-3">Timer: @TimerValue seconds</span>
 </div>
