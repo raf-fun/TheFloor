@@ -58,3 +58,18 @@ function loadCategories (key) {
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : null;
 }
+
+
+var Imagewindow = null;
+function openImageWindow() {
+    if (this.Imagewindow == null || this.Imagewindow.closed) {
+        this.Imagewindow = window.open("", "ImageNameWindow", "width=300,height=100");
+        this.Imagewindow.document.write("<html><head><title>Image Name</title></head><body><h1 id='imageName'>No Image</h1></body></html>");
+    }
+}
+
+function updateImageName (name) {
+    if (this.Imagewindow != null && !this.Imagewindow.closed) {
+        this.Imagewindow.document.getElementById('imageName').innerText = name;
+    }
+}

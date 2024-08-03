@@ -1,5 +1,7 @@
 ﻿@using TheFloor.Model
 
+@inject IJSRuntime JS
+
 @if (!IsStarted)
 {
     <button class="btn btn-primary mb-3" @onclick="StartTimer">Start</button>
@@ -92,17 +94,22 @@
     private const int countdown = 20;
 
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (category?.Images != null && category.Images.Any())
         {
-            ShowRandomPicture();
+            await ShowRandomPicture();
         }
     }
 
-    private void CheckClicked()
+    protected override async Task OnInitializedAsync()
     {
-        SwitchTimerAndScore(true);
+        await JS.InvokeVoidAsync("openImageWindow");
+    }
+
+    private async Task CheckClicked()
+    {
+        await SwitchTimerAndScore(true);
     }
 
     private async Task XClicked()
@@ -111,11 +118,11 @@
         disableAnswerButtons = true;
         await Task.Delay(3000);
         showPictureName = false;
-        SwitchPicture();
+        await SwitchPicture();
         disableAnswerButtons = false;
     }
 
-    private void SwitchTimerAndScore(bool check = false)
+    private async Task SwitchTimerAndScore(bool check = false)
     {
         if (ChallengerLastWhent)
         {
@@ -135,16 +142,16 @@
             StartChallengerTimer();
         }
 
-        ShowRandomPicture();
+        await ShowRandomPicture();
     }
 
-    private void ShowRandomPicture()
+    private async Task ShowRandomPicture()
     {
         ChallengerLastWhent = !ChallengerLastWhent;
-        SwitchPicture();
+        await SwitchPicture();
     }
 
-    private void SwitchPicture()
+    private async Task SwitchPicture()
     {
         var remainingPictures = category.Images.Where(img => !shownPictures.Contains(img.Url)).ToList();
 
@@ -158,6 +165,8 @@
         {
             currentPicture = null;
         }
+
+        await JS.InvokeVoidAsync("updateImageName", currentPicture.Name);
         StateHasChanged();
     }
 
