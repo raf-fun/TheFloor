@@ -1,4 +1,18 @@
-﻿function GetFolderFiles() {
+﻿window.keyHandler = {
+    initialize: function (dotNetObject) {
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'x' || event.key === 'X') {
+                dotNetObject.invokeMethodAsync('HandleXKey');
+            } else if (event.key === 'c' || event.key === 'C') {
+                dotNetObject.invokeMethodAsync('HandleCheckKey');
+            } else if (event.key === 'r' || event.key === 'R') {
+                dotNetObject.invokeMethodAsync('HandleRandom');
+            }
+        });
+    }
+};
+
+function GetFolderFiles() {
     return new Promise((resolve, reject) => {
         const input = document.createElement('input');
         input.type = 'file';

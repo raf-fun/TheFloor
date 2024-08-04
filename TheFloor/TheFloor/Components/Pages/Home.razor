@@ -70,6 +70,23 @@ else
 
     private Random random = new();
 
+
+
+    [JSInvokable]
+    public async Task HandleRandom()
+    {
+        await PickRandomCategory();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            
+        await JS.InvokeVoidAsync("keyHandler.initialize", DotNetObjectReference.Create(this));
+        }
+    }
+
     public async Task LoadImages()
     {
         try
