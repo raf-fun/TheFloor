@@ -11,7 +11,6 @@
 {
     <div>
         <button class="btn btn-primary" @onclick="LoadImages">Load Images</button>
-        <button class="btn btn-primary" @onclick="LoadSavedCategories">Load Images From History</button>
     </div>
 }
 
@@ -151,7 +150,7 @@ else
 
         StateHasChanged();
 
-        await SaveCategories();
+        //await SaveCategories();
     }
 
     private void Shuffle<T>(IList<T> list)
@@ -206,7 +205,7 @@ else
             enabledCategories = GetAdjacentCategories(ChallengerCategory);
             StateHasChanged();
 
-            await SaveCategories();
+            //await SaveCategories();
         }
     }
 
@@ -257,21 +256,6 @@ else
 
         // Remove duplicates and return
         return adjacentCategories.Distinct().ToList();
-    }
-
-    private async Task SaveCategories()
-    {
-        await JS.InvokeVoidAsync("saveCategories", LocalStorageKey, categories);
-    }
-
-    private async Task LoadSavedCategories()
-    {
-        var savedCategories = await JS.InvokeAsync<Category[]>("loadCategories", LocalStorageKey);
-        if (savedCategories != null)
-        {
-            categories = savedCategories.ToList();
-            showLoadImages = false;
-        }
     }
 }
 
