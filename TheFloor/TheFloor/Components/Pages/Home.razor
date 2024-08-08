@@ -51,39 +51,51 @@ else
 
 @code {
     private bool showLoadImages = true;
-
-    private List<FolderData> selectedFolders = new();
-    private FolderData selectedFolder;
-
     private List<Category> categories = new();
     private List<Category> enabledCategories = new();
     private List<Category> pickedCategories = new();
 
     private Category? selectedCategory;
-    public Category ChallengerCategory {get; set;}
+    public Category? ChallengerCategory { get; set; }
 
     private int highlightIndex = 0;
     private bool isPickingRandom = false;
     private const int selectionDuration = 1000;
+    private const int chunkSize = 10;
 
     private const string LocalStorageKey = "categoriesState";
 
     private Random random = new();
 
-
-
     [JSInvokable]
-    public async Task HandleRandom()
+    public void ProcessFoldersChunk(List<FolderData> chunk)
     {
-        await PickRandomCategory();
+        foreach (var folder in chunk)
+        {
+            var category = categories.FirstOrDefault(c => c.Name == folder.Name);
+            if (category == null)
+            {
+                categories.Add(new Category
+                    {
+                        Name = folder.Name,
+                        BgColor = GetRandomColor(),
+                        Images = folder.Files
+                    });
+            }
+            else
+            {
+                category.Images.AddRange(folder.Files);
+            }
+        }
+        Shuffle(categories);
+        StateHasChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            
-        await JS.InvokeVoidAsync("keyHandler.initialize", DotNetObjectReference.Create(this));
+            await JS.InvokeVoidAsync("keyHandler.initialize", DotNetObjectReference.Create(this));
         }
     }
 
@@ -92,36 +104,26 @@ else
         try
         {
             Console.WriteLine("Picker called.");
+            await JS.InvokeVoidAsync("GetFolderFiles", DotNetObjectReference.Create(this), chunkSize);
 
-            var folders = await JS.InvokeAsync<FolderData[]>("GetFolderFiles");
-            if (folders != null)
-            {
-                Console.WriteLine($"Received {folders.Length} folders");
-                selectedFolders = folders.ToList();
+            showLoadImages = false;
+            enabledCategories = new List<Category>();
 
-                var colors = new List<string> { "#FF5733", "#33FF57", "#3357FF", "#F033FF", "#FF33A1", "#33FFA1", "#FFA133", "#A1FF33" };
 
-                categories = selectedFolders.Select((folder, index) => new Category
-                    {
-                        Name = System.IO.Path.GetFileName(folder.Path),
-                        Images = folder.Files,
-                        BgColor = colors[index % colors.Count]
-                    }).ToList();
-
-                Shuffle(categories);
-
-                showLoadImages = false;
-                enabledCategories = new List<Category>();
-            }
-            else
-            {
-                Console.WriteLine("No folders received");
-            }
+            await JS.InvokeVoidAsync("openImageWindow");
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error picking folder: {ex.Message}");
         }
+    }
+
+    private string GetRandomColor()
+    {
+        var colors = new List<string> { "#FF5733", "#33FF57", "#3357FF", "#F033FF", 
+        "#FF33A1", "#33FFA1", "#FFA133", "#A1FF33","#b6e378", "#0a316e", "#1aebb6", "#892d77"
+        , "#a05ebc", "#8544c2", "#494f77"};
+        return colors[random.Next(colors.Count)];
     }
 
     private void ShowBack(Category category)
@@ -152,6 +154,19 @@ else
         await SaveCategories();
     }
 
+    private void Shuffle<T>(IList<T> list)
+    {
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = random.Next(n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
+    }
+
     private async Task PickRandomCategory()
     {
         if (isPickingRandom)
@@ -173,7 +188,7 @@ else
             int totalSteps = selectionDuration / 100;
             for (int i = 0; i < totalSteps; i++)
             {
-                highlightIndex = random.Next(availableCategories.Count); //i % availableCategories.Count;
+                highlightIndex = random.Next(availableCategories.Count);
                 ChallengerCategory = availableCategories[highlightIndex];
                 StateHasChanged();
                 await Task.Delay(100);
@@ -206,14 +221,18 @@ else
         }
     }
 
-    private List<Category> GetAdjacentCategories(Category category)
+    private List<Category> GetAdjacentCategories(Category? category)
     {
+        if (category == null)
+        {
+            return new();
+        }
         var adjacentCategories = new List<Category>();
         int rowCount = 4; // Columns per row
 
         // Find all indices of the challenger category
         var indices = categories.Select((cate, index) => new { cate, index })
-                                .Where(pair => pair.cate.Name == category.Name)
+                                .Where(pair => pair.cate.Name == category?.Name)
                                 .Select(pair => pair.index)
                                 .ToList();
 
@@ -238,19 +257,6 @@ else
 
         // Remove duplicates and return
         return adjacentCategories.Distinct().ToList();
-    }
-
-    private void Shuffle<T>(IList<T> list)
-    {
-        int n = list.Count;
-        while (n > 1)
-        {
-            n--;
-            int k = random.Next(n + 1);
-            T value = list[k];
-            list[k] = list[n];
-            list[n] = value;
-        }
     }
 
     private async Task SaveCategories()

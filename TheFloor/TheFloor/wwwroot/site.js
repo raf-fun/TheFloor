@@ -12,56 +12,40 @@
     }
 };
 
-function GetFolderFiles() {
-    return new Promise((resolve, reject) => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.webkitdirectory = true;
-        input.multiple = true;
+function GetFolderFiles(dotNetObject, chunkSize) {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.webkitdirectory = true;
+    input.multiple = true;
+    input.onchange = async (event) => {
+        const files = Array.from(event.target.files);
+        const totalFiles = files.length;
+        let index = 0;
 
-        input.onchange = () => {
-            const files = Array.from(input.files);
-            const folderMap = {};
+        while (index < totalFiles) {
+            const chunk = files.slice(index, index + chunkSize);
+            const entries = {};
 
-            const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
-
-            files.forEach(file => {
+            for (const file of chunk) {
                 const pathParts = file.webkitRelativePath.split('/');
-                const fileName = pathParts.pop();
-                const folderPath = pathParts.join('/');
-
-                const fileExtension = fileName.slice(fileName.lastIndexOf('.')).toLowerCase();
-                if (!imageExtensions.includes(fileExtension)) {
-                    return;
+                if (pathParts.length > 1) {
+                    const folderName = pathParts[1];
+                    if (!entries[folderName]) {
+                        entries[folderName] = {
+                            name: folderName,
+                            path: file.webkitRelativePath,
+                            files: []
+                        };
+                    }
+                    entries[folderName].files.push({ name: file.name, url: URL.createObjectURL(file) });
                 }
+            }
 
-                if (!folderMap[folderPath]) {
-                    folderMap[folderPath] = [];
-                }
-
-                folderMap[folderPath].push({
-                    name: fileName,
-                    path: file.webkitRelativePath,
-                    size: file.size,
-                    type: file.type,
-                    url: URL.createObjectURL(file) // Create a URL for the image
-                });
-            });
-
-            const folders = Object.keys(folderMap).map(folderPath => ({
-                path: folderPath,
-                files: folderMap[folderPath]
-            }));
-
-            resolve(folders);
-        };
-
-        input.onerror = (err) => {
-            reject(err);
-        };
-
-        input.click();
-    });
+            await dotNetObject.invokeMethodAsync('ProcessFoldersChunk', Object.values(entries));
+            index += chunkSize;
+        }
+    };
+    input.click();
 }
 
 function saveCategories(key, data) {

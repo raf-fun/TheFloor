@@ -104,7 +104,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await JS.InvokeVoidAsync("openImageWindow");
         await JS.InvokeVoidAsync("keyHandler.initialize", DotNetObjectReference.Create(this));
     }
 
@@ -180,7 +179,7 @@
 
         if (currentPicture != null)
         {
-            await JS.InvokeVoidAsync("updateImageName", currentPicture.Name);
+            await JS.InvokeVoidAsync("updateImageName", currentPicture.Name.Split('.')[0]);
         }
         StateHasChanged();
     }

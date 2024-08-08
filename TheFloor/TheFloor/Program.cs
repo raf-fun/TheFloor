@@ -1,4 +1,3 @@
-using TheFloor.Client.Pages;
 using TheFloor.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +6,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
+
+//builder.Services.AddSignalR(e => {
+//    e.MaximumReceiveMessageSize = 102400000;
+//});
 
 var app = builder.Build();
 
@@ -26,7 +29,6 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
-
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
