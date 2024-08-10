@@ -4,10 +4,17 @@
 
 @if (!IsStarted)
 {
-    <button class="btn btn-primary mb-3" @onclick="StartTimer">Start</button>
+    <button class="btn btn-primary mb-3" @onclick="StartCountdown">Start</button>
 }
 
-@if (IsStarted)
+@if (IsStarted && startCountdown > 0)
+{
+    <div class="d-flex flex-column align-items-center justify-content-center vh-100 text-center">
+        <h1>@startCountdown</h1>
+    </div>
+}
+
+@if (IsStarted && startCountdown <= 0)
 {
     <div class="d-flex flex-column align-items-center justify-content-center vh-100 text-center">
         @if (showPictureName)
@@ -91,7 +98,13 @@
 
     private FileData currentPicture;
     private HashSet<string> shownPictures = new();
+
     private const int countdown = 45;
+
+    private const int startCountdownDuration = 3;
+    private int startCountdown = startCountdownDuration;
+
+    private const int countdownInterval = 1000;
 
 
     protected override async Task OnParametersSetAsync()
@@ -105,6 +118,20 @@
     protected override async Task OnInitializedAsync()
     {
         await JS.InvokeVoidAsync("keyHandler.initialize", DotNetObjectReference.Create(this));
+    }
+
+    private async Task StartCountdown()
+    {
+        IsStarted = true;
+
+        while (startCountdown > 0)
+        {
+            StateHasChanged();
+            await Task.Delay(countdownInterval);
+            startCountdown--;
+        }
+
+        StartTimer();
     }
 
     private async Task CheckClicked()
@@ -165,18 +192,7 @@
         }
         else
         {
-            currentPicture = null;
-
-            // if (ChallengerTimerValue < ChallengeeTimerValue)
-            // {
-            //     ChallengeeTimerValue = 0;
-            //     StateHasChanged();
-            // }
-            // else
-            // {
-            //     ChallengerTimerValue = 0;
-            //     StateHasChanged();
-            // }
+            currentPicture = null!;
         }
 
         if (currentPicture != null)
