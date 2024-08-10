@@ -62,3 +62,32 @@ function updateImageName (name) {
         this.Imagewindow.document.getElementById('imageName').innerText = name;
     }
 }
+
+var correctSound = new Audio('/Sounds/Correct.wav');
+var wrongSound = new Audio('/Sounds/Wrong.mp3');
+
+
+correctSound.preload = 'auto';
+wrongSound.preload = 'auto';
+
+correctSound.addEventListener('ended', function () {
+    correctSound.currentTime = 0;
+});
+
+wrongSound.addEventListener('ended', function () {
+    wrongSound.currentTime = 0;
+});
+
+function playCorrectSound() {
+    if (!correctSound.paused) {
+        correctSound.currentTime = 0;
+    }
+    correctSound.play();
+}
+
+function playWrongSound() {
+    if (!wrongSound.paused) {
+        wrongSound.currentTime = 0;
+    }
+    wrongSound.play();
+}

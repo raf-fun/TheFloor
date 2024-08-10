@@ -109,11 +109,13 @@
 
     private async Task CheckClicked()
     {
+        await JS.InvokeVoidAsync("playCorrectSound");
         await SwitchTimerAndScore(true);
     }
 
     private async Task XClicked()
     {
+        await JS.InvokeVoidAsync("playWrongSound");
         showPictureName = true;
         disableAnswerButtons = true;
         await Task.Delay(3000);
