@@ -19,23 +19,25 @@
     <div class="d-flex flex-column align-items-center justify-content-center vh-100 text-center">
         @if (showPictureName)
         {
-            <h4>@currentPicture.Name</h4>
+            <h4>@currentPicture.Name.Split('.')[0]</h4>
         }
 
-        <div class="d-flex align-items-center justify-content-center" style="width: 60%; height: 60vh;">
+        <div class="d-flex align-items-center justify-content-center" style="width: 80%; height: 60vh;">
             <TimerScore Name="@Challenger.Name" Score="@ChallengerScore"
                         TimerValue="@ChallengerTimerValue" TimerValueChanged="@(value => ChallengerTimerValue = value)"
                         IsActive="!ChallengerLastWhent" Timer="ChallengerTimer" />
+
             <div class="image-wrapper d-flex align-items-center justify-content-center" style="width: 80%; height: 60vh;">
                 @if (currentPicture != null)
                 {
-                    <img src="@currentPicture.Url" alt="@currentPicture.Name" class="img-fluid" style="max-width: 100%; max-height: 100%; object-fit: cover;" />
+                    <img src="@currentPicture.Url" alt="@currentPicture.Name" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain;" />
                 }
                 else
                 {
                     <h3 style="color:red">No more Pictures</h3>
                 }
             </div>
+
             <TimerScore Name="@category.Name" Score="@ChallengeeScore"
                         TimerValue="@ChallengeeTimerValue" TimerValueChanged="@(value => ChallengeeTimerValue = value)"
                         IsActive="ChallengerLastWhent" Timer="ChallengeeTimer" />
@@ -99,7 +101,7 @@
     private FileData currentPicture;
     private HashSet<string> shownPictures = new();
 
-    private const int countdown = 45;
+    private const int countdown = 45;//45;
 
     private const int startCountdownDuration = 3;
     private int startCountdown = startCountdownDuration;
@@ -205,14 +207,21 @@
     [JSInvokable]
     public Task HandleXKey()
     {
+        if (TimerZero)
+        {
+            return Task.CompletedTask;
+        }
         return XClicked();
     }
 
     [JSInvokable]
     public Task HandleCheckKey()
     {
-        CheckClicked();
-        return Task.CompletedTask;
+        if (TimerZero)
+        {
+            return Task.CompletedTask;
+        }
+        return CheckClicked();
     }
 
     private void StartChallengerTimer()
@@ -235,11 +244,14 @@
     {
         InvokeAsync(() =>
         {
-            ChallengerTimerValue--;
             if (ChallengerTimerValue <= 0)
             {
                 TimerZero = true;
                 ChallengerTimer.Stop();
+            }
+            else
+            {
+                ChallengerTimerValue--;
             }
             StateHasChanged();
         });
@@ -249,11 +261,14 @@
     {
         InvokeAsync(() =>
         {
-            ChallengeeTimerValue--;
             if (ChallengeeTimerValue <= 0)
             {
                 TimerZero = true;
                 ChallengeeTimer.Stop();
+            }
+            else
+            {
+                ChallengeeTimerValue--;
             }
             StateHasChanged();
         });
