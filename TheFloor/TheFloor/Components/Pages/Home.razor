@@ -29,7 +29,7 @@ else
         {
             var isDisabled = isPickingRandom || !(enabledCategories.Contains(category) && category != ChallengerCategory);
             <div class="col">
-                <div class="card h-100 @(category == ChallengerCategory ? "highlight" : "") @(isDisabled ? "disabled-card" : "")"
+                <div class="card h-100 @((category == ChallengerCategory) ? "highlight" : "") @(isDisabled ? "disabled-card" : "")"
                      style="background-color: @category.BgColor;" @onclick="@(isDisabled ? null : () => ShowBack(category))">
                     <div class="card-body">
                         <h5 class="card-title">@category.Name</h5>
@@ -44,12 +44,11 @@ else
     </div>
 }
 
-@if (selectedCategory != null)
-{
-    <div class="fullscreen">
-        <Back category="selectedCategory" Close="HideBack" Challenger="ChallengerCategory"/>
-    </div>
-}
+
+<div class="fullscreen @(selectedCategory != null ? "active" : "")">
+    <Back category="selectedCategory" Close="HideBack" Challenger="ChallengerCategory"/>
+</div>
+
 
 
 @code {
@@ -124,7 +123,7 @@ else
     private string GetRandomColor()
     {
         var colors = new List<string> { "#FF5733", "#33FF57", "#3357FF", "#F033FF", 
-        "#FF33A1", "#33FFA1", "#FFA133", "#A1FF33","#b6e378", "#0a316e", "#1aebb6", "#892d77"
+        "#FF33A1", "#33FFA1", "#FFA133", "#A1FF33","#b6e378", "#3072d9", "#1aebb6", "#892d77"
         , "#a05ebc", "#8544c2", "#494f77"};
         return colors[random.Next(colors.Count)];
     }

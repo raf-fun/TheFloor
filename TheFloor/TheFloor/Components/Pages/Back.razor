@@ -14,7 +14,7 @@
     </div>
 }
 
-@if (IsStarted && startCountdown <= 0)
+@if (IsStarted && startCountdown <= 0 && category != null)
 {
     <div class="d-flex flex-column align-items-center justify-content-center vh-100 text-center">
         @if (showPictureName)
@@ -52,7 +52,7 @@
             </button>
         </div>
 
-        <button class="btn btn-primary mt-3 mb-3" @onclick="Close">Close</button>
+        <button class="btn btn-primary mt-3 mb-3" @onclick="ResestAndClose">Close</button>
 
         @if (TimerZero)
         {
@@ -101,7 +101,7 @@
     private FileData currentPicture;
     private HashSet<string> shownPictures = new();
 
-    private const int countdown = 45;//45;
+    private const int countdown = 45;
 
     private const int startCountdownDuration = 3;
     private int startCountdown = startCountdownDuration;
@@ -117,9 +117,12 @@
         }
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await JS.InvokeVoidAsync("keyHandler.initialize", DotNetObjectReference.Create(this));
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("keyHandler.initialize", DotNetObjectReference.Create(this));
+        }
     }
 
     private async Task StartCountdown()
@@ -282,8 +285,27 @@
         StartChallengerTimer();
     }
 
-    public void Dispose()
+    public void ResestAndClose()
     {
+        Close.InvokeAsync();
+        IsStarted = false;
+        disableAnswerButtons = false;
+        showPictureName = false;
+
+        ChallengerTimerValue = 0;
+        ChallengeeTimerValue = 0;
+        TimerZero = false;
+
+        ChallengerTimer = new();
+        ChallengeeTimer = new();
+
+        ChallengerScore = 0;
+        ChallengeeScore = 0;
+
+        ChallengerLastWhent = false;
+
+        shownPictures = new();
+        startCountdown = startCountdownDuration;
         ChallengeeTimer?.Dispose();
         ChallengerTimer?.Dispose();
     }
