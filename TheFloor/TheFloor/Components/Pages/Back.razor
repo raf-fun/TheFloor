@@ -19,13 +19,15 @@
     <div class="d-flex flex-column align-items-center justify-content-center vh-100 text-center">
         @if (showPictureName)
         {
-            <h4>@currentPicture.Name.Split('.')[0]</h4>
+            <h4>@GetPictureName()</h4>
         }
 
         <div class="d-flex align-items-center justify-content-center" style="width: 80%; height: 60vh;">
             <TimerScore Name="@Challenger.Name" Score="@ChallengerScore"
-                        TimerValue="@ChallengerTimerValue" TimerValueChanged="@(value => ChallengerTimerValue = value)"
-                        IsActive="!ChallengerLastWhent" Timer="ChallengerTimer" />
+                        TimerValue="@ChallengerTimerValue"
+                        IsActive="ChallengerTimerActive" Timer="ChallengerTimer"
+                        TimerValueChanged="@(value => ChallengerTimerValue = value)"
+                        TimerZero="@TimerDone" />
 
             <div class="image-wrapper d-flex align-items-center justify-content-center" style="width: 80%; height: 60vh;">
                 @if (currentPicture != null)
@@ -39,8 +41,10 @@
             </div>
 
             <TimerScore Name="@category.Name" Score="@ChallengeeScore"
-                        TimerValue="@ChallengeeTimerValue" TimerValueChanged="@(value => ChallengeeTimerValue = value)"
-                        IsActive="ChallengerLastWhent" Timer="ChallengeeTimer" />
+                        TimerValue="@ChallengeeTimerValue"
+                        IsActive="ChallengeeTimerActive" Timer="ChallengeeTimer"
+                        TimerValueChanged="@(value => ChallengeeTimerValue = value)"
+                        TimerZero="@TimerDone" />
         </div>
 
         <div class="d-flex justify-content-around w-100 mt-3">
@@ -96,18 +100,18 @@
     public int ChallengerScore { get; set; }
     public int ChallengeeScore { get; set; }
 
-    public bool ChallengerLastWhent { get; set; } = false;
+    public bool ChallengerTimerActive { get; set; } = true;
+    public bool ChallengeeTimerActive { get; set; } = false;
 
     private FileData currentPicture;
     private HashSet<string> shownPictures = new();
 
-    private const int countdown = 45;
+    private const int countdown = 5;
 
     private const int startCountdownDuration = 3;
     private int startCountdown = startCountdownDuration;
 
     private const int countdownInterval = 1000;
-
 
     protected override async Task OnParametersSetAsync()
     {
@@ -115,6 +119,11 @@
         {
             await ShowRandomPicture();
         }
+    }
+
+    protected override void OnInitialized()
+    {
+        SetAllTimerDetails();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -158,7 +167,7 @@
 
     private async Task SwitchTimerAndScore(bool check = false)
     {
-        if (ChallengerLastWhent)
+        if (ChallengerTimerActive)
         {
             if (check)
             {
@@ -166,6 +175,7 @@
             }
 
             StartChallengeeTimer();
+            SwitchTimersActive();
         }
         else
         {
@@ -174,6 +184,7 @@
                 ChallengeeScore++;
             }
             StartChallengerTimer();
+            SwitchTimersActive();
         }
 
         await ShowRandomPicture();
@@ -181,8 +192,13 @@
 
     private async Task ShowRandomPicture()
     {
-        ChallengerLastWhent = !ChallengerLastWhent;
         await SwitchPicture();
+    }
+
+    private void SwitchTimersActive()
+    {
+        ChallengerTimerActive = !ChallengerTimerActive;
+        ChallengeeTimerActive = !ChallengeeTimerActive;
     }
 
     private async Task SwitchPicture()
@@ -202,7 +218,7 @@
 
         if (currentPicture != null)
         {
-            await JS.InvokeVoidAsync("updateImageName", currentPicture.Name.Split('.')[0]);
+            await JS.InvokeVoidAsync("updateImageName", GetPictureName());
         }
         StateHasChanged();
     }
@@ -227,67 +243,39 @@
         return CheckClicked();
     }
 
+    private void SetAllTimerDetails()
+    {
+
+        ChallengerTimer.Interval = 1000;
+        ChallengeeTimer.Interval = 1000;
+    }
     private void StartChallengerTimer()
     {
         ChallengeeTimer?.Stop();
-        ChallengerTimer = new System.Timers.Timer(1000); // 1 second interval
-        ChallengerTimer.Elapsed += OnChallengerTimerElapsed;
         ChallengerTimer.Start();
     }
 
     private void StartChallengeeTimer()
     {
         ChallengerTimer?.Stop();
-        ChallengeeTimer = new System.Timers.Timer(1000); // 1 second interval
-        ChallengeeTimer.Elapsed += OnChallengeeTimerElapsed;
         ChallengeeTimer.Start();
     }
 
-    private void OnChallengerTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+    public string GetPictureName()
     {
-        InvokeAsync(() =>
-        {
-            if (ChallengerTimerValue <= 0)
-            {
-                TimerZero = true;
-                ChallengerTimer.Stop();
-            }
-            else
-            {
-                ChallengerTimerValue--;
-            }
-            StateHasChanged();
-        });
+        return currentPicture.Name.TrimEnd().Remove(currentPicture.Name.LastIndexOf('.'));
     }
-
-    private void OnChallengeeTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
-    {
-        InvokeAsync(() =>
-        {
-            if (ChallengeeTimerValue <= 0)
-            {
-                TimerZero = true;
-                ChallengeeTimer.Stop();
-            }
-            else
-            {
-                ChallengeeTimerValue--;
-            }
-            StateHasChanged();
-        });
-    }
-
     private void StartTimer()
     {
         IsStarted = true;
         ChallengerTimerValue = countdown;
         ChallengeeTimerValue = countdown;
         StartChallengerTimer();
+        StateHasChanged();
     }
 
-    public void ResestAndClose()
+    public async Task ResestAndClose()
     {
-        Close.InvokeAsync();
         IsStarted = false;
         disableAnswerButtons = false;
         showPictureName = false;
@@ -296,17 +284,19 @@
         ChallengeeTimerValue = 0;
         TimerZero = false;
 
-        ChallengerTimer = new();
-        ChallengeeTimer = new();
-
         ChallengerScore = 0;
         ChallengeeScore = 0;
 
-        ChallengerLastWhent = false;
+        ChallengerTimerActive = true;
+        ChallengeeTimerActive = false;
 
         shownPictures = new();
         startCountdown = startCountdownDuration;
-        ChallengeeTimer?.Dispose();
-        ChallengerTimer?.Dispose();
+        await Close.InvokeAsync();
+    }
+
+    public void TimerDone()
+    {
+        TimerZero = true;
     }
 }

@@ -23,7 +23,7 @@ else
     <div class="d-flex justify-content-center m-3">
         <h3>Categories</h3>
     </div>
-    
+
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4 pb-3">
         @foreach (var category in categories)
         {
@@ -46,7 +46,7 @@ else
 
 
 <div class="fullscreen @(selectedCategory != null ? "active" : "")">
-    <Back category="selectedCategory" Close="HideBack" Challenger="ChallengerCategory"/>
+    <Back category="selectedCategory" Close="HideBack" Challenger="ChallengerCategory" />
 </div>
 
 
@@ -65,7 +65,6 @@ else
     private const int selectionDuration = 1000;
     private const int chunkSize = 10;
 
-    private const string LocalStorageKey = "categoriesState";
 
     private Random random = new();
 
@@ -122,7 +121,7 @@ else
 
     private string GetRandomColor()
     {
-        var colors = new List<string> { "#FF5733", "#33FF57", "#3357FF", "#F033FF", 
+        var colors = new List<string> { "#FF5733", "#33FF57", "#3357FF", "#F033FF",
         "#FF33A1", "#33FFA1", "#FFA133", "#A1FF33","#b6e378", "#3072d9", "#1aebb6", "#892d77"
         , "#a05ebc", "#8544c2", "#494f77"};
         return colors[random.Next(colors.Count)];
