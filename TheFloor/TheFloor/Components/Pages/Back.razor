@@ -17,10 +17,12 @@
 @if (IsStarted && startCountdown <= 0 && category != null)
 {
     <div class="d-flex flex-column align-items-center justify-content-center vh-100 text-center">
-        @if (showPictureName)
-        {
-            <h4>@GetPictureName()</h4>
-        }
+        <div class="fixed-picture-name">
+            @if (showPictureName)
+            {
+                <h4>@GetPictureName()</h4>
+            }
+        </div>
 
         <div class="d-flex align-items-center justify-content-center" style="width: 80%; height: 60vh;">
             <TimerScore Name="@Challenger.Name" Score="@ChallengerScore"
@@ -29,14 +31,14 @@
                         TimerValueChanged="@(value => ChallengerTimerValue = value)"
                         TimerZero="@TimerDone" />
 
-            <div class="image-wrapper d-flex align-items-center justify-content-center" style="width: 80%; height: 60vh;">
+            <div class="image-wrapper d-flex align-items-center justify-content-center">
                 @if (currentPicture != null)
                 {
-                    <img src="@currentPicture.Url" alt="@currentPicture.Name" class="img-fluid" style="width: 100%; height: 100%; object-fit: contain;" />
+                    <img src="@currentPicture.Url" alt="@currentPicture.Name" class="img-fluid fixed-image" />
                 }
                 else
                 {
-                    <h3 style="color:red">No more Pictures</h3>
+                    <h3 class="no-more-images">No more Pictures</h3>
                 }
             </div>
 
@@ -58,19 +60,21 @@
 
         <button class="btn btn-primary mt-3 mb-3" @onclick="ResestAndClose">Close</button>
 
-        @if (TimerZero)
-        {
-            <div class="mt-3">
-                @if (ChallengerTimerValue <= 0)
-                {
-                    <h1>Congrats on defending your category! You will now be @Challenger.Name.</h1>
-                }
-                else if (ChallengeeTimerValue <= 0)
-                {
-                    <h1>The challenger category @Challenger.Name has won this round.</h1>
-                }
-            </div>
-        }
+        <div class="fixed-timerzero">
+            @if (TimerZero)
+            {
+                <div class="mt-3">
+                    @if (ChallengerTimerValue <= 0)
+                    {
+                        <h1>Congrats on defending your category! You will now be @Challenger.Name.</h1>
+                    }
+                    else if (ChallengeeTimerValue <= 0)
+                    {
+                        <h1>The challenger category @Challenger.Name has won this round.</h1>
+                    }
+                </div>
+            }
+        </div>
     </div>
 }
 
@@ -103,10 +107,10 @@
     public bool ChallengerTimerActive { get; set; } = true;
     public bool ChallengeeTimerActive { get; set; } = false;
 
-    private FileData currentPicture;
+    private FileData? currentPicture;
     private HashSet<string> shownPictures = new();
 
-    private const int countdown = 5;
+    private const int countdown = 45;
 
     private const int startCountdownDuration = 3;
     private int startCountdown = startCountdownDuration;
@@ -263,7 +267,7 @@
 
     public string GetPictureName()
     {
-        return currentPicture.Name.TrimEnd().Remove(currentPicture.Name.LastIndexOf('.'));
+        return currentPicture?.Name.TrimEnd().Remove(currentPicture.Name.LastIndexOf('.')) ?? "Unknown";
     }
     private void StartTimer()
     {

@@ -1,0 +1,36 @@
+﻿.image-wrapper {
+    width: 500px;
+    height: 500px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-right: 20px;
+    margin-left: 20px;
+}
+
+.fixed-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.no-more-images {
+    text-align: center;
+    color: red;
+    font-size: 24px;
+}
+
+.fixed-picture-name {
+    height: 40px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fixed-timerzero {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
