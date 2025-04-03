@@ -83,3 +83,23 @@ h1:focus {
 .fullscreen.active {
     transform: translateY(0);
 }
+
+.card-transition-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.card-transition-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    transform: translateX(-100%);
+    z-index: 1;
+    transition: transform 1.5s ease-in-out;
+}
+
+    .card-transition-overlay.animate {
+        transform: translateX(0);
+    }

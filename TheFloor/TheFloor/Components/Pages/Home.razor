@@ -29,10 +29,17 @@ else
         {
             var isDisabled = isPickingRandom || !(enabledCategories.Contains(category) && category != ChallengerCategory);
             <div class="col">
-                <div class="card h-100 @((category == ChallengerCategory) ? "highlight" : "") @(isDisabled ? "disabled-card" : "")"
+                <div class="card h-100 @((category == ChallengerCategory) ? "highlight" : "") @(category.IsTransitioning ? "transitioning" : "") @(isDisabled ? "disabled-card" : "")"
                      style="background-color: @category.BgColor;" @onclick="@(isDisabled ? null : () => ShowBack(category))">
-                    <div class="card-body">
-                        <h5 class="card-title">@category.Name</h5>
+
+                    <div class="card-transition-wrapper">
+                        <div class="card-body position-relative">
+                            <h5 class="card-title">@category.Name</h5>
+                        </div>
+
+                        <div class="card-transition-overlay @(category.IsTransitioning ? "animate" : "")"
+                             style="background-color:@category.TransitionColor">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -45,7 +52,7 @@ else
 }
 
 
-<div class="fullscreen @(selectedCategory != null ? "active" : "")">
+<div class="fullscreen @(showBackScreen == false ? "" : "active")">
     <Back category="selectedCategory" Close="HideBack" Challenger="ChallengerCategory" />
 </div>
 
@@ -64,6 +71,8 @@ else
     private bool isPickingRandom = false;
     private const int selectionDuration = 1000;
     private const int chunkSize = 10;
+
+    public bool showBackScreen = false;
 
 
     private Random random = new();
@@ -130,14 +139,31 @@ else
     private void ShowBack(Category category)
     {
         selectedCategory = category;
+        showBackScreen = true;
     }
 
     private async Task HideBack()
     {
-        if (selectedCategory != null)
+        showBackScreen = false;
+
+        StateHasChanged();
+        await Task.Delay(1000);
+
+        if (selectedCategory != null && ChallengerCategory != null)
         {
+            foreach (var cat in categories.Where(c => c.Name == selectedCategory.Name))
+            {
+                cat.IsTransitioning = true;
+                cat.TransitionColor = ChallengerCategory.BgColor;
+            }
+
+            StateHasChanged();
+
+            await Task.Delay(2000);
+
             ReplaceCategory(selectedCategory, ChallengerCategory);
             selectedCategory = null;
+
         }
 
         if (ChallengerCategory != null)
