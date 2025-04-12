@@ -30,7 +30,7 @@ else
             var isDisabled = isPickingRandom || !(enabledCategories.Contains(category) && category != ChallengerCategory);
             <div class="col">
                 <div class="card h-100 @((category == ChallengerCategory) ? "highlight" : "") @(category.IsTransitioning ? "transitioning" : "") @(isDisabled ? "disabled-card" : "")"
-                     style="background-color: @category.BgColor;" @onclick="@(isDisabled ? null : () => ShowBack(category))">
+                     style="background-color: @category.BgColor;" @onclick="@(() => ShowGameBaord(category))">
 
                     <div class="card-transition-wrapper">
                         <div class="card-body position-relative">
@@ -52,8 +52,8 @@ else
 }
 
 
-<div class="fullscreen @(showBackScreen == false ? "" : "active")">
-    <Back category="selectedCategory" Close="HideBack" Challenger="ChallengerCategory" />
+<div class="fullscreen @(showGameBaord == false ? "" : "active")">
+    <GameBaord category="selectedCategory" Close="HideGameBaord" Challenger="ChallengerCategory" />
 </div>
 
 
@@ -72,7 +72,7 @@ else
     private const int selectionDuration = 1000;
     private const int chunkSize = 10;
 
-    public bool showBackScreen = false;
+    public bool showGameBaord = false;
 
 
     private Random random = new();
@@ -136,15 +136,15 @@ else
         return colors[random.Next(colors.Count)];
     }
 
-    private void ShowBack(Category category)
+    private void ShowGameBaord(Category category)
     {
         selectedCategory = category;
-        showBackScreen = true;
+        showGameBaord = true;
     }
 
-    private async Task HideBack()
+    private async Task HideGameBaord()
     {
-        showBackScreen = false;
+        showGameBaord = false;
 
         StateHasChanged();
         await Task.Delay(1000);

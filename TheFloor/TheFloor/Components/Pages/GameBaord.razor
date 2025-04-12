@@ -16,7 +16,7 @@
 
 @if (IsStarted && startCountdown <= 0 && category != null)
 {
-    <div class="d-flex flex-column align-items-center justify-content-center vh-100 text-center">
+    <div class="d-flex flex-column align-items-center justify-content-center vh-100 w-80 text-center">
         <div class="fixed-picture-name">
             @if (showPictureName)
             {
@@ -24,7 +24,7 @@
             }
         </div>
 
-        <div class="d-flex align-items-center justify-content-center" style="width: 80%; height: 60vh;">
+        <div class="d-flex align-items-center justify-content-center" style="height: 60vh;">
             <TimerScore Name="@Challenger.Name" Score="@ChallengerScore"
                         TimerValue="@ChallengerTimerValue"
                         IsActive="ChallengerTimerActive" Timer="ChallengerTimer"
@@ -48,8 +48,8 @@
                         TimerValueChanged="@(value => ChallengeeTimerValue = value)"
                         TimerZero="@TimerDone" />
         </div>
-
-        <div class="d-flex justify-content-around w-100 mt-3">
+    
+        <div class="d-flex justify-content-around mt-3">
             <button class="btn btn-success w-50 me-2" @onclick="CheckClicked" disabled="@(TimerZero || disableAnswerButtons)">
                 <i class="fa-solid fa-check fa-xl"></i>
             </button>
@@ -76,6 +76,7 @@
             }
         </div>
     </div>
+    
 }
 
 
