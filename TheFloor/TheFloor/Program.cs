@@ -1,4 +1,6 @@
 using TheFloor.Components;
+using TheFloor.Hubs;
+using TheFloor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,11 +9,18 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
+//Add SessionManager
+builder.Services.AddSingleton<SessionManager>();
+
+builder.Services.AddSignalR();
 //builder.Services.AddSignalR(e => {
 //    e.MaximumReceiveMessageSize = 102400000;
 //});
 
 var app = builder.Build();
+
+//Configure Hubs
+app.MapHub<HostHub>("/hosthub");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
